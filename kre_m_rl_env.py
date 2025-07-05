@@ -62,24 +62,30 @@ class KREmMultiAgentEnv(MultiAgentEnv):
 
         for agent_id, action in action_dict.items():
             app = self.apps[agent_id]
+            # 예산이 없으면 행동하지 않음
+            if app.budget <= 0:
+                rewards[agent_id] = 0
+                continue
+
             node_to_buy_from = self.nodes[action]
             market = self.markets[node_to_buy_from.id]
 
             cost = market.buy("cpu", 1.0)
 
+            # [수정된 부분] 보상 체계 변경
             if cost != -1.0:
                 app.budget -= cost
-                rewards[agent_id] = -cost
+                # 성공 시: 성공 보너스 5점에서 비용을 뺀 값을 보상으로 제공
+                rewards[agent_id] = 5.0 - cost 
             else:
-                rewards[agent_id] = -10.0 # 구매 실패 시 페널티
+                # 실패 시: 페널티 -10점
+                rewards[agent_id] = -10.0
         
         obs = self._get_obs()
 
-        # [수정된 부분] 시간 초과는 truncateds로 처리
         is_truncated = self.timestep >= 50
         truncateds["__all__"] = is_truncated
         
-        # 우리 환경에는 '진짜 종료' 조건이 없으므로 dones는 항상 False
         dones["__all__"] = False
         
         return obs, rewards, dones, truncateds, infos
