@@ -11,7 +11,9 @@ config = (
     .environment(KREmMultiAgentEnv, env_config={"num_nodes": 2, "num_apps": 5})
     .framework("torch")
     .env_runners(
-        num_env_runners=4
+        num_env_runners=4,
+        # [수정된 부분] 에피소드 단위로 데이터 수집을 강제
+        batch_mode="complete_episodes"
     )
     .multi_agent(
         policies=["app_policy"],
@@ -29,7 +31,6 @@ print("\n--- 훈련 시작 ---")
 for i in range(10):
     result = algo.train()
     
-    # [수정된 부분] .get()을 사용하여 안전하게 키 값 가져오기
     mean_reward = result.get('episode_reward_mean', 0)
     
     print(f"Iteration: {i+1}")
