@@ -23,6 +23,9 @@ config = (
     .rl_module(
         model_config={"fcnet_hiddens": [64, 64]},
     )
+    .training(
+        lr=5e-4
+    )
 )
 
 # 3. 훈련기(Trainer) 생성
