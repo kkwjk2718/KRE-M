@@ -32,21 +32,27 @@ def run_simulation(nodes, markets, apps):
     for timestep in range(simulation_duration):
         print(f"\n--- Timestep {timestep+1}/{simulation_duration} ---")
         
-        # --- 아주 간단한 '더미(Dummy)' 앱 에이전트 로직 ---
-        # 모든 앱이 첫 번째 노드에서 CPU 1개를 구매하려고 시도합니다.
+        # --- '가격 비교' 기능이 추가된 앱 에이전트 로직 ---
         for app in apps:
-            target_node_id = "node-1"
-            resource_type = "cpu"
+            if app.budget <= 0:
+                continue
+
+            # 1. 구매할 노드 결정을 위해 모든 시장의 CPU 가격 정보 수집
+            prices = {node.id: markets[node.id].get_price("cpu") for node in nodes}
+            
+            # 2. 가장 저렴한 노드 찾기
+            best_node_id = min(prices, key=prices.get)
             amount_to_buy = 1.0
 
-            if app.budget > 0:
-                print(f"[App {app.id}]가 Node {target_node_id}에서 CPU 구매 시도...")
-                market = markets[target_node_id]
-                cost = market.buy(resource_type, amount_to_buy)
+            print(f"[App {app.id}]가 가장 저렴한 [Node {best_node_id}] (가격: {prices[best_node_id]:.2f})에서 구매 시도...")
+            
+            # 3. 가장 저렴한 노드에서 구매 실행
+            market_to_buy_from = markets[best_node_id]
+            cost = market_to_buy_from.buy("cpu", amount_to_buy)
 
-                if cost != -1.0: # 구매 성공 시
-                    app.budget -= cost
-                    app.allocated_cpu += amount_to_buy
+            if cost != -1.0: # 구매 성공 시
+                app.budget -= cost
+                app.allocated_cpu += amount_to_buy
 
         # 현재 상태 출력
         print("\n[현재 상태]")
