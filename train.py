@@ -19,7 +19,7 @@ config = (
     )
     .resources(num_gpus=1)
     .rl_module(
-        model_config_dict={"fcnet_hiddens": [64, 64]},
+        model_config={"fcnet_hiddens": [64, 64]},
     )
 )
 
@@ -28,8 +28,12 @@ algo = config.build()
 print("\n--- 훈련 시작 ---")
 for i in range(10):
     result = algo.train()
+    
+    # [수정된 부분] .get()을 사용하여 안전하게 키 값 가져오기
+    mean_reward = result.get('episode_reward_mean', 0)
+    
     print(f"Iteration: {i+1}")
-    print(f"  Mean Reward: {result['episode_reward_mean']:.2f}")
+    print(f"  Mean Reward: {mean_reward:.2f}")
 
 print("--- 훈련 종료 ---")
 ray.shutdown()
