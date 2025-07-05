@@ -43,14 +43,13 @@ class KREmMultiAgentEnv(MultiAgentEnv):
 
     def reset(self, *, seed=None, options=None):
         """환경을 초기 상태로 리셋하고, 첫 번째 상태를 반환합니다."""
-        print("--- 환경 리셋 ---")
+        # print("--- 환경 리셋 ---") # 로그가 너무 많아져서 주석 처리
         self.timestep = 0
         
         self.nodes = [Node(f"node-{i}", 10, 32) for i in range(self.num_nodes)]
         self.markets = {node.id: NodeAMM(node) for node in self.nodes}
         self.apps = {f"app_{i}": App(f"app_{i}", 2, 4, 100.0) for i in range(self.num_apps)}
         
-        # [수정된 부분] 현재 활성화된 에이전트 목록을 명시적으로 설정
         self.agents = list(self.apps.keys())
         
         return self._get_obs(), {}
@@ -58,7 +57,6 @@ class KREmMultiAgentEnv(MultiAgentEnv):
     def step(self, action_dict):
         """에이전트들의 행동을 받아 한 스텝을 진행하고, 결과(상태, 보상, 종료 여부)를 반환합니다."""
         self.timestep += 1
-        # print(f"\n--- Timestep {self.timestep} ---") # 훈련 중에는 로그를 줄이기 위해 주석 처리
         
         obs, rewards, dones, truncateds, infos = {}, {}, {}, {}, {}
 
@@ -73,11 +71,16 @@ class KREmMultiAgentEnv(MultiAgentEnv):
                 app.budget -= cost
                 rewards[agent_id] = -cost
             else:
-                rewards[agent_id] = -10.0
+                rewards[agent_id] = -10.0 # 구매 실패 시 페널티
         
         obs = self._get_obs()
-        dones["__all__"] = self.timestep >= 50
-        truncateds["__all__"] = False
+
+        # [수정된 부분] 시간 초과는 truncateds로 처리
+        is_truncated = self.timestep >= 50
+        truncateds["__all__"] = is_truncated
+        
+        # 우리 환경에는 '진짜 종료' 조건이 없으므로 dones는 항상 False
+        dones["__all__"] = False
         
         return obs, rewards, dones, truncateds, infos
 
@@ -87,6 +90,5 @@ class KREmMultiAgentEnv(MultiAgentEnv):
         cpu_prices = [self.markets[node.id].get_price("cpu") for node in self.nodes]
 
         for agent_id, app in self.apps.items():
-            # 상태값들을 float32 numpy 배열로 변환
             all_obs[agent_id] = np.array([app.budget] + cpu_prices, dtype=np.float32)
         return all_obs
