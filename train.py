@@ -30,16 +30,9 @@ print("\n--- 훈련 시작 ---")
 for i in range(10):
     result = algo.train()
     
-    # [수정된 부분] result 딕셔너리의 모든 키와 주요 정보를 출력
-    print(f"\nIteration: {i+1}")
-    print(f"Total Timesteps: {result['timesteps_total']}")
-    print(f"Result Keys: {list(result.keys())}")
-    
-    # Mean Reward가 있는지 확인하고 출력
-    if 'episode_reward_mean' in result:
-        print(f"  Mean Reward: {result['episode_reward_mean']:.2f}")
-    else:
-        print("  Mean Reward: (Not available in this result)")
+    print(f"\n----------- Iteration: {i+1} -----------")
+    # [수정된 부분] result 딕셔너리 전체 내용을 보기 좋게 출력
+    print(pretty_print(result))
 
 
 print("\n--- 훈련 종료 ---")
